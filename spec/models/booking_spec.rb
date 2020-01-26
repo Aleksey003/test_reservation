@@ -70,5 +70,76 @@ RSpec.describe Booking, type: :model do
         end
       end
     end
+
+    describe 'reservation availability' do
+      subject { build(:booking, table: table, start_date: start_date, end_date: end_date) }
+
+      let(:table) { existing_booking.table }
+
+      let!(:existing_booking) do
+        create(:booking,
+               start_date: Time.zone.parse('2020-01-01 16:00:00 UTC'),
+               end_date: Time.zone.parse('2020-01-01 19:00:00 UTC'))
+      end
+
+      let(:start_date) { existing_booking.start_date }
+      let(:end_date) { existing_booking.end_date }
+
+      context 'when within different table' do
+        let(:table) { create(:table) }
+
+        it do
+          is_expected.to be_valid
+        end
+      end
+
+      context 'when dates are availabled' do
+        let(:start_date) { existing_booking.end_date + 1.hour }
+        let(:end_date) { start_date + 1.hour }
+
+        it do
+          is_expected.to be_valid
+        end
+      end
+
+      context 'when existing end_date and new start_date are equal' do
+        let(:start_date) { existing_booking.end_date }
+        let(:end_date) { start_date + 1.hour }
+
+        it do
+          is_expected.to be_valid
+        end
+      end
+
+      context 'when existing end new dates equal' do
+        let(:start_date) { existing_booking.start_date }
+        let(:end_date) { existing_booking.end_date }
+
+        it do
+          is_expected.to be_invalid
+          expect(subject.errors[:base]).to eq ['dates are not available']
+        end
+      end
+
+      context 'when both existing and new dates are overlapped' do
+        let(:start_date) { existing_booking.start_date + 1.hour }
+        let(:end_date) { start_date + 1.hour }
+
+        it do
+          is_expected.to be_invalid
+          expect(subject.errors[:base]).to eq ['dates are not available']
+        end
+      end
+
+      context 'when existing and new start dates are overlapped' do
+        let(:start_date) { existing_booking.end_date - 1.minute }
+        let(:end_date) { start_date + 1.hour }
+
+        it do
+          is_expected.to be_invalid
+          expect(subject.errors[:base]).to eq ['dates are not available']
+        end
+      end
+    end
   end
 end
