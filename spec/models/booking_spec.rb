@@ -1,0 +1,74 @@
+# frozen_string_literal: true
+
+require 'rails_helper'
+
+RSpec.describe Booking, type: :model do
+  describe 'factory' do
+    it 'be valid' do
+      expect(build(:booking)).to be_valid
+    end
+
+    it 'be creatable' do
+      expect(create(:booking)).to be_persisted
+    end
+  end
+
+  describe 'validations' do
+    it { is_expected.to validate_presence_of(:start_date) }
+    it { is_expected.to validate_presence_of(:end_date) }
+
+    describe 'end_date_greater then start_date' do
+      subject { build(:booking, start_date: start_date, end_date: end_date) }
+      let(:start_date) { Time.zone.parse('2020-01-01 12:00:00 UTC') }
+
+      context 'when end_date less than start_date' do
+        let(:end_date) { start_date - 1.second }
+
+        it do
+          is_expected.to_not allow_value(end_date).for(:end_date)
+                                                  .with_message('must be a greater than start date')
+        end
+      end
+
+      context 'when end_date equals start_date' do
+        let(:end_date) { start_date }
+
+        it do
+          is_expected.to_not allow_value(end_date).for(:end_date)
+                                                  .with_message('must be a greater than start date')
+        end
+      end
+    end
+
+    describe 'step between start & end dates' do
+      subject { build(:booking, start_date: start_date, end_date: end_date) }
+      let(:start_date) { Time.zone.parse('2020-01-01 16:34:18 UTC') }
+      let(:end_date) { start_date + interval }
+
+      context 'when 30 min' do
+        let(:interval) { 30.minutes }
+
+        it do
+          is_expected.to allow_value(end_date).for(:end_date)
+        end
+      end
+
+      context 'when 60 min' do
+        let(:interval) { 60.minutes }
+
+        it do
+          is_expected.to allow_value(end_date).for(:end_date)
+        end
+      end
+
+      context 'when 1 min' do
+        let(:interval) { 1.minutes }
+
+        it do
+          is_expected.to_not allow_value(end_date).for(:end_date)
+                                                  .with_message('step between start date must be 30 min')
+        end
+      end
+    end
+  end
+end

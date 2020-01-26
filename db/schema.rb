@@ -12,9 +12,20 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20_200_126_201_408) do
+ActiveRecord::Schema.define(version: 20_200_126_203_116) do
   # These are extensions that must be enabled in order to support this database
   enable_extension 'plpgsql'
+
+  create_table 'bookings', force: :cascade do |t|
+    t.bigint 'user_id', null: false
+    t.bigint 'table_id', null: false
+    t.datetime 'start_date', precision: 6, null: false
+    t.datetime 'end_date', precision: 6, null: false
+    t.datetime 'created_at', precision: 6, null: false
+    t.datetime 'updated_at', precision: 6, null: false
+    t.index ['table_id'], name: 'index_bookings_on_table_id'
+    t.index ['user_id'], name: 'index_bookings_on_user_id'
+  end
 
   create_table 'restaurants', force: :cascade do |t|
     t.string 'name'
@@ -36,5 +47,7 @@ ActiveRecord::Schema.define(version: 20_200_126_201_408) do
     t.datetime 'updated_at', precision: 6, null: false
   end
 
+  add_foreign_key 'bookings', 'tables'
+  add_foreign_key 'bookings', 'users'
   add_foreign_key 'tables', 'restaurants'
 end
